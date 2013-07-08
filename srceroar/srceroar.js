@@ -3,7 +3,7 @@
  AUTHOR: 	Chris Patten
  LANG: 		Node.js/JavaScript
  EMAIL: 	cpatten[t.a.]packetresearch.com
- TWITTER: 	@packetassailant
+ TWITTER: 	packetassailant
  
  FUNCTION: 	Explode source code archives into a word-list comprised of unique words.
  			This is useful for targeted attacks against open-source implementations.
@@ -15,23 +15,23 @@ var http = require('http');
 var https = require('https');
 var url = require('url');
 var optimist = require('optimist')
-		.usage('Create wordlists from source code archives (e.g., src-tarball.tar.gz).\
-    			\nUsage: $0 (-i archive || -u download-url) -o wordlist-output-file')
-    			.alias('h', 'help')
-    			.alias('i', 'infile')
-    			.alias('o', 'outfile')
-    			.alias('u', 'url')    			
-    			.describe('h', 'Show Usage and opts (i.e., this list of opt/args)')
-    			.describe('i', 'Input archive file')
-    			.describe('o', 'Output wordlist file')
-    			.describe('u', 'Input archive download URL (e.g., http://nodejs.org/dist/v0.10.12/node-v0.10.12.tar.gz)');
+	.usage('Create wordlists from source code archives (e.g., src-tarball.tar.gz).\
+    		\nUsage: $0 (-i archive || -u download-url) -o wordlist-output-file')
+    		.alias('h', 'help')
+    		.alias('i', 'infile')
+    		.alias('o', 'outfile')
+    		.alias('u', 'url')    			
+    		.describe('h', 'Show Usage and opts (i.e., this list of opt/args)')
+    		.describe('i', 'Input archive file')
+    		.describe('o', 'Output wordlist file')
+    		.describe('u', 'Input archive download URL (e.g., http://nodejs.org/dist/v0.10.12/node-v0.10.12.tar.gz)');
 
 
 function PathObj() { }
 PathObj.prototype = {
   	setinputfile: function (inputfile) {
   		this.inputfile = inputfile;
-		console.log("This is the setinputfile: " + this.inputfile);
+		extractArchive(this.inputfile, recurseDirectory);
 	},
 	setoutputfile: function (outputfile) {
 		this.outputfile = outputfile;
@@ -40,7 +40,7 @@ PathObj.prototype = {
 	setdownloadurl: function (flag, downloadurl) {
 		this.flag = flag;
 		this.downloadurl = downloadurl;
-		extract(this.flag, this.downloadurl);
+		downloadArchive(this.flag, this.downloadurl, extractArchive);
 	}
 };
 
@@ -60,7 +60,6 @@ function validatePath(flag, pathentry, callback) {
 				}
 				if (stats.isFile) {
 					if (typeof callback === "function") {
-						console.log(pdtmp);
 						return callback(pdtmp);
 					}					
 				} 
@@ -90,9 +89,10 @@ function createOutFile(outputFile) {
 	});
 }
 
-function extract(flag, urlFile){
+function downloadArchive(flag, urlFile, callback){
 	if (flag === "urlflag"){
 		var parseurl = url.parse(urlFile);
+		var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '');
 		
 		var headers = {
 				"accept-charset" : "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
@@ -111,7 +111,6 @@ function extract(flag, urlFile){
 		
 		function urlstream(response) {
 			var contentLength = parseInt(response.headers['content-length'], 10);
-			var fileName = parseurl.path.substr(parseurl.path.lastIndexOf("/")).replace(/^\//g, '');
 			console.log("Downloading " + fileName);
 			
 			if (contentLength) {
@@ -120,7 +119,6 @@ function extract(flag, urlFile){
 			    var pace = require('pace')({total: contentLength, maxBurden: 10});
 			    
 			    var downloadfile = fs.createWriteStream(fileName, {'flags': 'w'});
-			    console.log("File size " + "tarfile" + ": " + response.headers['content-length'] + " bytes.");
 			    response.on('data', function (chunk) {
 			    	dlprogress += chunk.length;
 			    	while (count < dlprogress) {
@@ -132,20 +130,43 @@ function extract(flag, urlFile){
 			    response.on("end", function() {
 			    	downloadfile.end();
 			    	console.log("Finished downloading " + fileName);
+			    	
+			    	if (typeof callback === "function") {
+						return callback(fileName);
+					} 
 			    });
 			    response.on('response', function(){
 			    	if(!response.STATUS_CODES[200]){
 			    		throw new Error('HTTP Response not 200');
 			    	}
 			    });			    
-			}		
+			}					
 		}
+		http.request(options, urlstream).end();		
+	}	 
+}
 
-		http.request(options, urlstream).end();
-		
-	} else if (flag === "inflag"){
-		console.log("this is the infile placeholder");
+function extractArchive(archiveFile, callback) {
+	if (archiveFile.match(/\.tar/)) {
+		var fileuuid = Math.random().toString(36).substr(2,9);
+	} else if (archiveFile.match(/\.tgz/)) {
+		var fileuuid = Math.random().toString(36).substr(2,9);
+	} else {
+		console.log("The file %s contains an unsupported extension!", archiveFile);
+		process.exit(0);
 	}
+
+	tarball.extractTarball(archiveFile, '/tmp/' + fileuuid, function(err){
+		if (err) {
+			throw err;
+		} else if (typeof callback === "function") {
+			return callback("test");
+		} 
+	})
+}
+
+function recurseDirectory(inFile) {
+	console.log("this is a recurse test of: %s", inFile);
 }
 
 function main() {
@@ -174,11 +195,6 @@ function main() {
 	if (argv.outfile) {
 		var outflag = "outflag";
 		validatePath(outflag, argv.outfile, pathinst.setoutputfile);
-	}
-
-	if (argv.tmpdir) {
-		var tmpflag = "tmpflag";
-		validatePath(tmpflag, argv.tmpdir, pathinst.settmpdirectory);
 	}
 
 	process.on( "SIGINT", function() {
