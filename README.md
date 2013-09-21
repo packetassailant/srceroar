@@ -17,11 +17,11 @@ $ node srceroar.js -h <br>
 Create wordlists from source code archives (e.g., src-tarball.tar.gz).    	
 Usage: node ./srceroar.js (-i archive || -u download-url) -o wordlist-output-file
 
-Options:
+Options: <br>
   -h, --help     Show Usage and opts (i.e., this list of opt/args)                                      
   -i, --infile   Input archive file                                                                     
   -o, --outfile  Output wordlist file                                                                   
-  -u, --url      Input archive download URL (e.g., http://nodejs.org/dist/v0.10.12/node-v0.10.12.tar.gz)
+  -u, --url      Input archive download URL (e.g., http://nodejs.org/dist/v0.10.12/node-v0.10.12.tar.gz) <br>
   -g, --gitrepo  Input git repo to clone 
 
 
