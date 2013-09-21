@@ -10,6 +10,7 @@ FUNCTION:	Explode source code archives into a word-list comprised of unique word
 EXAMPLE:	Locating privileged functionality in non-standard installs through forceful browsing. 
 */
 
+var git = require('nodegit');
 var fs = require('fs-extra');
 var http = require('http');
 var path = require('path');
@@ -24,15 +25,18 @@ var optimist = require('optimist')
     	.alias('h', 'help')
     	.alias('i', 'infile')
     	.alias('o', 'outfile')
-    	.alias('u', 'url')    			
+    	.alias('u', 'url')
+    	.alias('g', 'gitrepo')   			
     	.describe('h', 'Show Usage and opts (i.e., this list of opt/args)')
     	.describe('i', 'Input archive file')
     	.describe('o', 'Output wordlist file')
-    	.describe('u', 'Input archive download URL (e.g., http://nodejs.org/dist/v0.10.12/node-v0.10.12.tar.gz)');
+    	.describe('u', 'Input archive download URL (e.g., http://nodejs.org/dist/v0.10.12/node-v0.10.12.tar.gz)')
+    	.describe('g', 'Input git repo to clone');
 
 
-function PathObj(inputfile, downloadurl, outputfile, flag) { 
+function PathObj(inputfile, gitrepourl, downloadurl, outputfile, flag) { 
 	this.inputfile = inputfile;
+	this.gitrepourl = gitrepourl;
 	this.outputfile = outputfile;
 	this.downloadurl = downloadurl;
 	this.tmpdir = fs.mkdirsSync('/tmp/' + Math.random().toString(36).substr(2,9));
@@ -45,6 +49,9 @@ function validatePath(flag, pathentry) {
 		return pathentry;
 	}
 	if (flag === "inflag" && pathentry) {
+		return pathentry;
+	}
+	if (flag === "gitflag" && pathentry) {
 		return pathentry;
 	}
 	if (flag === "outflag") {
@@ -62,6 +69,19 @@ function createOutFile(outputFile) {
 	    }
 	});
 }
+
+function cloneGitRepo(pathinst, callback){
+	var parseurl = url.parse(pathinst['gitrepourl']);
+	var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '').replace(/\.git/, '');
+	winston.info("Downloading the " + fileName + " GIT repo to: " + pathinst['tmpdir']);
+	git.Repo.clone(pathinst['gitrepourl'], pathinst['tmpdir'], null, function(error) {
+		if (error) throw error;
+		if (typeof(callback) === "function") {
+			winston.info("Finished downloading " + fileName + " to: " + pathinst['tmpdir']);
+			return callback(pathinst['tmpdir']);
+		} 
+	});
+};
 
 function downloadArchive(pathinst, callback){
 	var parseurl = url.parse(pathinst['downloadurl']);
@@ -85,7 +105,7 @@ function downloadArchive(pathinst, callback){
 	
 	function urlstream(response) {
 		var contentLength = parseInt(response.headers['content-length'], 10);
-		winston.info("Downloading file to: " + tmppath);
+		winston.info("Downloading " + fileName + " to: " + tmppath);
 		
 		if (contentLength) {
 			var dlprogress = 0;
@@ -103,7 +123,7 @@ function downloadArchive(pathinst, callback){
 		    });
 		    response.on("end", function() {		    	
 		    	downloadfile.end();
-		    	winston.info("Finished downloading " + fileName);
+		    	winston.info("Finished downloading " + fileName + " to: " + tmppath);
 		    	
 		    	if (typeof(callback) === "function") {
 					return callback(tmppath, path.dirname(tmppath));
@@ -124,6 +144,8 @@ function processArchive(pathinst) {
 		downloadArchive(pathinst, extractArchive);
 	} else if ( pathinst['flag'] === 'inflag') {
 		extractArchive(pathinst['inputfile'], pathinst['tmpdir']);
+	} else if (pathinst['flag'] === 'gitflag') { 
+		cloneGitRepo(pathinst, recurseDirectory);
 	}
 }
 
@@ -146,8 +168,8 @@ function extractArchive(abspath, basedir) {
 	}
 }
 
-function recurseDirectory(fileName, tmppath) {
-	winston.info("this is a recurse test of: %s and %s", fileName, tmppath);
+function recurseDirectory(tmppath) {
+	winston.info("this is a recurse test of: %s", tmppath);
 }
 
 function main() {
@@ -155,11 +177,19 @@ function main() {
 
 	if (argv.help) {
 		optimist.showHelp();
+		process.exit(code=0);
 	}
 
 	if (argv.infile && argv.url) {
 	    winston.info('Error! --infile and --url are mutually exclusive\n');
 	    optimist.showHelp();
+	    process.exit(code=0);
+	}
+
+	if (argv.url && argv.gitrepo) {
+		winston.info('Error! --url and --gitrepo are mutually exclusive\n')
+		optimist.showHelp();
+		process.exit(code=0);
 	}
 
 	if (argv.infile) {
@@ -182,6 +212,16 @@ function main() {
 		}
 	}
 
+	if (argv.gitrepo) {
+		var gitflag = "gitflag";
+		if (validatePath(gitflag, argv.gitrepo) !== undefined) {
+			var grepo = validatePath(gitflag, argv.gitrepo);
+			var flag = "gitflag";
+		} else {
+			var grepo = undefined;
+		}
+	}
+
 	if (argv.outfile) {
 		var outflag = "outflag";
 		if (validatePath(outflag, argv.outfile) !== undefined) {
@@ -191,7 +231,7 @@ function main() {
 		}
 	}
 
-	var pathinst = new PathObj(infile, dlurl, outfile, flag);
+	var pathinst = new PathObj(infile, grepo, dlurl, outfile, flag);
 	processArchive(pathinst);
 
 	process.on( "SIGINT", function() {
