@@ -13,7 +13,7 @@ As of now, this utility only accomodates downloading and wordlist generation. It
 
 
 ## Usage
-$ node srceroar.js -h
+$ node srceroar.js -h <br>
 Create wordlists from source code archives (e.g., src-tarball.tar.gz).    	
 Usage: node ./srceroar.js (-i archive || -u download-url) -o wordlist-output-file
 
