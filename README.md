@@ -26,7 +26,7 @@ Options: <br>
 
 
 ## Developing
-Currently under active development and soon to be completely fucntional.
+Currently under active development and soon to be completely functional.
 
 
 
