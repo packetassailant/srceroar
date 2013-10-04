@@ -70,19 +70,6 @@ function createOutFile(outputFile) {
 	});
 }
 
-function cloneGitRepo(pathinst, callback){
-	var parseurl = url.parse(pathinst['gitrepourl']);
-	var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '').replace(/\.git/, '');
-	winston.info("Downloading the " + fileName + " GIT repo to: " + pathinst['tmpdir']);
-	git.Repo.clone(pathinst['gitrepourl'], pathinst['tmpdir'], null, function(error) {
-		if (error) throw error;
-		if (typeof(callback) === "function") {
-			winston.info("Finished downloading " + fileName + " to: " + pathinst['tmpdir']);
-			return callback(pathinst['tmpdir']);
-		} 
-	});
-};
-
 function downloadArchive(pathinst, callback){
 	var parseurl = url.parse(pathinst['downloadurl']);
 	var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '');
@@ -149,6 +136,42 @@ function processArchive(pathinst) {
 	}
 }
 
+function cloneGitRepo(pathinst, callback){
+	var parseurl = url.parse(pathinst['gitrepourl']);
+	var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '').replace(/\.git/, '');
+	winston.info("Downloading the " + fileName + " GIT repo to: " + pathinst['tmpdir']);
+	git.Repo.clone(pathinst['gitrepourl'], pathinst['tmpdir'], null, function(error) {
+		if (error) throw error;
+		if (typeof(callback) === "function") {
+			winston.info("Finished downloading " + fileName + " to: " + pathinst['tmpdir']);
+			return callback(pathinst['tmpdir'], parsePathArray);
+		} 
+	});
+};
+
+function recurseDirectory(tmppath, callback) {
+	winston.info("Processing directory contents of: " + tmppath);
+	var wordarr = [];
+	var finder = require('findit2').find(tmppath);
+	finder.on('path', function(file, stat) {
+		wordarr.push(file);
+	});
+	finder.on('end', function(err) {
+		if (err) {
+			winston.info('Caught exception: ' + err);
+		} else {
+			return callback(null, wordarr);
+		}
+	});
+};
+
+function parsePathArray(err, wordarr) {
+	if (error) {
+		winston.info('Caught exception: ' + err);
+	}
+	winston.info(wordarr);
+}
+
 function extractArchive(abspath, basedir) {
 	if (abspath.match(/\.tar|tgz|gz/)) {
 		winston.info("Extracting archive " + path.basename(abspath) + " to " + basedir)
@@ -166,10 +189,6 @@ function extractArchive(abspath, basedir) {
 		winston.info("The file %s contains an unsupported extension!", archiveFile);
 		process.exit(0);
 	}
-}
-
-function recurseDirectory(tmppath) {
-	winston.info("this is a recurse test of: %s", tmppath);
 }
 
 function main() {
