@@ -22,8 +22,17 @@ Options: <br>
   -i, --infile   Input archive file                                                                     
   -o, --outfile  Output wordlist file                                                                   
   -u, --url      Input archive download URL (e.g., http://nodejs.org/dist/v0.10.12/node-v0.10.12.tar.gz) <br>
-  -g, --gitrepo  Input git repo to clone 
+  -g, --gitrepo  Input git repo to clone <br>
 
+Note: Srceroar will clean up after itself by recursively deleting the temporary download directory (e.g., /tmp/cdhimt2c6) <br>
+
+## Sample Run
+$ node srceroar.js -g https://github.com/nodegit/nodegit.git -o /tmp/test.out <br>
+info: Downloading the nodegit GIT repo to: /tmp/cdhimt2c6 <br>
+info: Finished downloading nodegit to: /tmp/cdhimt2c6 <br>
+info: Processing directory contents of: /tmp/cdhimt2c6 <br>
+info: Creating wordlist file: /tmp/test.out <br>
+info: Finished creating wordlist file: /tmp/test.out <br>
 
 ## Developing
 Alpha code under active development
