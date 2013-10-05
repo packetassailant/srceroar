@@ -14,6 +14,7 @@ var git = require('nodegit');
 var fs = require('fs-extra');
 var http = require('http');
 var path = require('path');
+var rimraf = require('rimraf');
 var tar = require('tar');
 var url = require('url');
 var wget = require('wget');
@@ -144,32 +145,86 @@ function cloneGitRepo(pathinst, callback){
 		if (error) throw error;
 		if (typeof(callback) === "function") {
 			winston.info("Finished downloading " + fileName + " to: " + pathinst['tmpdir']);
-			return callback(pathinst['tmpdir'], parsePathArray);
+			return callback(pathinst, parsePathArray);
 		} 
 	});
 };
 
-function recurseDirectory(tmppath, callback) {
-	winston.info("Processing directory contents of: " + tmppath);
-	var wordarr = [];
-	var finder = require('findit2').find(tmppath);
+function recurseDirectory(pathinst, callback) {
+	winston.info("Processing directory contents of: " + pathinst['tmpdir']);
+	var patharr = [];
+	var finder = require('findit2').find(pathinst['tmpdir']);
 	finder.on('path', function(file, stat) {
-		wordarr.push(file);
+		patharr.push(file);
 	});
 	finder.on('end', function(err) {
 		if (err) {
 			winston.info('Caught exception: ' + err);
 		} else {
-			return callback(null, wordarr);
+			return callback(null, pathinst, patharr, createOutputFile);
 		}
 	});
 };
 
-function parsePathArray(err, wordarr) {
-	if (error) {
+function parsePathArray(err, pathinst, patharr, callback) {
+	var wordarr = [];
+	if (err) {
 		winston.info('Caught exception: ' + err);
-	}
-	winston.info(wordarr);
+	} else {
+		patharr.forEach(function(item) {
+			if (patharr.indexOf('/')) {
+				var a = item.split('/');
+				wordarr.push.apply(wordarr, a);
+			} else if (patharr.indexOf('\\')) {
+				var a = item.split('\\');
+				wordarr.push.apply(wordarr, a);
+			}
+		});
+		wordarr = wordarr.filter(function(n) {
+			return n; 
+		});
+		var unique = function(wordarr) {
+			var newArr = [],
+			origLen = wordarr.length,
+			found,
+			x, y;
+          
+		    for ( x = 0; x < origLen; x++ ) {  
+		        found = undefined;  
+		        for ( y = 0; y < newArr.length; y++ ) {  
+		            if ( wordarr[x] === newArr[y] ) {   
+		              found = true;  
+		              break;  
+		            }  
+		        }  
+		        if ( !found) newArr.push( wordarr[x] );
+		    } 
+		    return newArr; 
+   		}
+   		return callback(null, pathinst, unique(wordarr));
+   	}
+}
+
+function createOutputFile(err, pathinst, wordarr) {	
+	if (err) {
+		winston.info('Caught exception: ' + err);
+	} else {
+		winston.info("Creating wordlist file: " + pathinst['outputfile']);
+
+		var file = fs.createWriteStream(pathinst['outputfile']);
+		file.on('error', function(err) { 
+			winston.info('Caught exception: ' + err); 
+		});
+		wordarr.forEach(function(word) { 
+			file.write(word  + '\n'); 
+		});
+		winston.info("Finished creating wordlist file: " + pathinst['outputfile']);		
+		rimraf(pathinst['tmpdir'], function(err) {
+			if (err) {
+				winston.info('Caught exception: ' + err);
+			}
+		})
+	}	
 }
 
 function extractArchive(abspath, basedir) {
