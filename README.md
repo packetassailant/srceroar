@@ -26,6 +26,16 @@ Options: <br>
 
 Note: Srceroar will clean up after itself by recursively deleting the temporary download directory (e.g., /tmp/cdhimt2c6) <br>
 
+## Installation 
+Dalek was developed and tested on OSX ML <br>
+ ----------- OSX --------------- <br>
+git clone https://github.com/packetassailant/srceroar.git <br>
+cd srceroar <br>
+sudo npm install //this will install npm dependent modules in the local ./node_modules directory <br>
+
+Note: The nodegit module requires cmake in order to build the native C implementation of git (this is not a wrapper for git). It is advised that you leverage the operating system's package management system to install cmake to a location that is available within the path. For instance, macports has a cmake binary and will automagically install within /opt/local/bin.
+
+
 ## Sample Run
 $ node srceroar.js -g https://github.com/nodegit/nodegit.git -o /tmp/test.out <br>
 info: Downloading the nodegit GIT repo to: /tmp/cdhimt2c6 <br>
