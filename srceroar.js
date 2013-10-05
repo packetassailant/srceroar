@@ -6,7 +6,7 @@ EMAIL:		cpatten[t.a.]packetresearch.com
 TWITTER:	packetassailant
  
 FUNCTION:	Explode source code archives into a word-list comprised of unique words.
-			This is useful for targeted attacks against open-source implementations.
+                This is useful for targeted attacks against open-source implementations.
 EXAMPLE:	Locating privileged functionality in non-standard installs through forceful browsing. 
 */
 
@@ -141,9 +141,10 @@ function cloneGitRepo(pathinst, callback){
 	var parseurl = url.parse(pathinst['gitrepourl']);
 	var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '').replace(/\.git/, '');
 	winston.info("Downloading the " + fileName + " GIT repo to: " + pathinst['tmpdir']);
-	git.Repo.clone(pathinst['gitrepourl'], pathinst['tmpdir'], null, function(error) {
-		if (error) throw error;
-		if (typeof(callback) === "function") {
+	git.Repo.clone(pathinst['gitrepourl'], pathinst['tmpdir'], null, function(err) {
+		if (err) {
+			winston.info('Caught exception: ' + err);
+		} else if (typeof(callback) === "function") {
 			winston.info("Finished downloading " + fileName + " to: " + pathinst['tmpdir']);
 			return callback(pathinst, parsePathArray);
 		} 
@@ -236,8 +237,8 @@ function extractArchive(abspath, basedir) {
 			gzip.end();
             winston.info('Finished extracting ' + path.basename(abspath));
         });
-        gzip.on('error', function(er) { 
-            winston.log('error', er);
+        gzip.on('error', function(err) { 
+            winston.info('Caught exception: ' + err);
         });
 	} else {
 		winston.info("The file %s contains an unsupported extension!", path.basename(abspath));
