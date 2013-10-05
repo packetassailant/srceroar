@@ -1,0 +1,36 @@
+{
+  "name": "srceroar",
+  "version": "0.0.1",
+  "description": "A utility to create wordlists from source code archives",
+  "main": "srceroar.js",
+  "dependencies": {
+    "fs-extra": "~0.6.4",
+    "nodegit": "~0.1.0",
+    "optimist": "~0.6.0",
+    "path": "~0.4.9",
+    "pace": "~0.0.4",
+    "rimraf": "~2.2.2",
+    "tar": "~0.1.18",
+    "url": "~0.7.9",
+    "zlib": "~1.0.5",
+    "winston": "~0.7.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/packetassailant/srceroar.git"
+  },
+  "keywords": [
+    "security",
+    "pentest",
+    "webappsec",
+    "wordlist",
+    "dictionary",
+    "attacks"
+  ],
+  "author": "Chris Patten <cpatten[t.a.]packetresearch.com",
+  "license": "MIT"
+}
