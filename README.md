@@ -13,6 +13,7 @@ As of now, this utility only accomodates downloading and wordlist generation. It
 
 
 ## Usage
+'''
 $ node srceroar.js -h <br>
 Create wordlists from source code archives (e.g., src-tarball.tar.gz).    	
 Usage: node ./srceroar.js (-i archive || -u download-url) -o wordlist-output-file
@@ -25,6 +26,7 @@ Options: <br>
   -g, --gitrepo  Input git repo to clone <br>
 
 Note: Srceroar will clean up after itself by recursively deleting the temporary download directory (e.g., /tmp/cdhimt2c6) <br>
+'''
 
 ## Installation 
 Dalek was developed and tested on OSX ML <br>
