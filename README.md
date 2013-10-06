@@ -43,11 +43,11 @@ Note: Srceroar will clean up after itself by recursively deleting the temporary 
 
 ## Installation 
 ```
-Srceroar was developed and tested on OSX ML <br>
- ----------- OSX --------------- <br>
-git clone https://github.com/packetassailant/srceroar.git <br>
-cd srceroar <br>
-sudo npm install //this will install npm dependent modules in the local ./node_modules directory <br>
+Srceroar was developed and tested on OSX ML 
+ ----------- OSX --------------- 
+git clone https://github.com/packetassailant/srceroar.git 
+cd srceroar 
+sudo npm install //this will install npm dependent modules in the local ./node_modules directory 
 
 Note: The nodegit module requires cmake in order to build the native C implementation of git (this is not 
 a wrapper for git). It is advised that you leverage the operating system's package management system to 
@@ -57,12 +57,12 @@ and will automagically install within /opt/local/bin.
 
 ## Sample Run
 ```
-$ node srceroar.js -g https://github.com/nodegit/nodegit.git -o /tmp/test.out <br>
-info: Downloading the nodegit GIT repo to: /tmp/cdhimt2c6 <br>
-info: Finished downloading nodegit to: /tmp/cdhimt2c6 <br>
-info: Processing directory contents of: /tmp/cdhimt2c6 <br>
-info: Creating wordlist file: /tmp/test.out <br>
-info: Finished creating wordlist file: /tmp/test.out <br>
+$ node srceroar.js -g https://github.com/nodegit/nodegit.git -o /tmp/test.out 
+info: Downloading the nodegit GIT repo to: /tmp/cdhimt2c6 
+info: Finished downloading nodegit to: /tmp/cdhimt2c6 
+info: Processing directory contents of: /tmp/cdhimt2c6 
+info: Creating wordlist file: /tmp/test.out 
+info: Finished creating wordlist file: /tmp/test.out
 ```
 
 ## Developing
