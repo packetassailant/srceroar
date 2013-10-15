@@ -17,6 +17,7 @@ var path = require('path');
 var rimraf = require('rimraf');
 var tar = require('tar');
 var url = require('url');
+var walk = require('walkdir');
 var winston = require('winston');
 var zlib = require('zlib');
 var optimist = require('optimist')
@@ -103,7 +104,7 @@ function downloadArchive(pathinst, callback){
 	function urlstream(response) {
 		var contentLength = parseInt(response.headers['content-length'], 10);
 		winston.info("Downloading " + fileName + " to: " + tmppath);
-		
+
 		if (contentLength) {
 			var dlprogress = 0;
             var count = 0;
@@ -121,8 +122,8 @@ function downloadArchive(pathinst, callback){
             response.on("end", function() {	
                 downloadfile.end();
                 winston.info("Finished downloading " + fileName + " to: " + tmppath);
-	
-                if (typeof(callback) === "function") {
+
+				if (typeof(callback) === "function") {
 					return callback(pathinst, recurseDirectory);
 				} 
             });
@@ -154,11 +155,11 @@ function cloneGitRepo(pathinst, callback){
 function recurseDirectory(pathinst, callback) {
 	winston.info("Processing directory contents of: " + pathinst['tmpdir']);
 	var patharr = [];
-	var finder = require('findit2').find(pathinst['tmpdir']);
-	finder.on('path', function(file, stat) {
+	var walker = walk(pathinst['tmpdir']);
+	walker.on('path', function(file, stat) {
 		patharr.push(file);
 	});
-	finder.on('end', function(err) {
+	walker.on('end', function(err) {
 		if (err) {
 			winston.info('Caught exception: ' + err);
 		} else {
@@ -238,7 +239,7 @@ function extractArchive(pathinst, callback) {
 		gzip.on('end', function() {	
 			gzip.end();
             winston.info('Finished extracting ' + fileName);
-            return callback(pathinst);
+            return callback(pathinst, parsePathArray);
         });
         gzip.on('error', function(err) { 
             winston.info('Caught exception: ' + err);

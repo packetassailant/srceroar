@@ -14,7 +14,7 @@
     "url": "~0.7.9",
     "zlib": "~1.0.5",
     "winston": "~0.7.2",
-    "findit2": "~0.2.0"
+    "walkdir": "0.0.7"
   },
   "devDependencies": {},
   "scripts": {
