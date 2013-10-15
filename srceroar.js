@@ -70,6 +70,16 @@ function createOutFile(outputFile) {
 	});
 }
 
+function processArchive(pathinst) {
+	if (pathinst['flag'] === 'urlflag') {
+		downloadArchive(pathinst, extractArchive);
+	} else if ( pathinst['flag'] === 'inflag') {
+		extractArchive(pathinst, recurseDirectory);
+	} else if (pathinst['flag'] === 'gitflag') { 
+		cloneGitRepo(pathinst, recurseDirectory);
+	}
+}
+
 function downloadArchive(pathinst, callback){
 	var parseurl = url.parse(pathinst['downloadurl']);
 	var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '');
@@ -113,7 +123,7 @@ function downloadArchive(pathinst, callback){
                 winston.info("Finished downloading " + fileName + " to: " + tmppath);
 	
                 if (typeof(callback) === "function") {
-					return callback(tmppath, path.dirname(tmppath));
+					return callback(pathinst, recurseDirectory);
 				} 
             });
             response.on('response', function(){
@@ -125,16 +135,6 @@ function downloadArchive(pathinst, callback){
 		}
 	}
 	http.request(options, urlstream).end();	 
-}
-
-function processArchive(pathinst) {
-	if (pathinst['flag'] === 'urlflag') {
-		downloadArchive(pathinst, extractArchive);
-	} else if ( pathinst['flag'] === 'inflag') {
-		extractArchive(pathinst['inputfile'], pathinst['tmpdir']);
-	} else if (pathinst['flag'] === 'gitflag') { 
-		cloneGitRepo(pathinst, recurseDirectory);
-	}
 }
 
 function cloneGitRepo(pathinst, callback){
@@ -206,7 +206,7 @@ function parsePathArray(err, pathinst, patharr, callback) {
     }
 }
 
-function createOutputFile(err, pathinst, wordarr) {	
+function createOutputFile(err, pathinst, wordarr) {
 	if (err) {
 		winston.info('Caught exception: ' + err);
 	} else {
@@ -228,20 +228,35 @@ function createOutputFile(err, pathinst, wordarr) {
 	}	
 }
 
-function extractArchive(abspath, basedir) {
-	if (abspath.match(/\.tar|tgz|gz/)) {
-		winston.info("Extracting archive " + path.basename(abspath) + " to " + basedir);
-		var gzip = fs.createReadStream(abspath).pipe(zlib.createGunzip()).pipe(tar.Extract({
-			path: basedir}));
+function extractArchive(pathinst, callback) {
+	if (pathinst['flag'] === 'urlflag') {
+		var parseurl = url.parse(pathinst['downloadurl']);
+		var fileName = parseurl.path.substr(parseurl.path.lastIndexOf('/')).replace(/^\//g, '');
+		winston.info("Extracting archive " + fileName + " to " + pathinst['tmpdir']);
+		var gzip = fs.createReadStream(path.join(pathinst['tmpdir'], fileName)).pipe(zlib.createGunzip()).pipe(tar.Extract({
+			path: pathinst['tmpdir']}));
 		gzip.on('end', function() {	
 			gzip.end();
-            winston.info('Finished extracting ' + path.basename(abspath));
+            winston.info('Finished extracting ' + fileName);
+            return callback(pathinst);
+        });
+        gzip.on('error', function(err) { 
+            winston.info('Caught exception: ' + err);
+        });
+	} else if (path.basename(pathinst['inputfile']).match(/\.tar|tgz|gz/)) {
+		winston.info("Extracting archive " + path.basename(pathinst['inputfile']) + " to " + pathinst['tmpdir']);
+		var gzip = fs.createReadStream(pathinst['inputfile']).pipe(zlib.createGunzip()).pipe(tar.Extract({
+			path: pathinst['tmpdir']}));
+		gzip.on('end', function() {	
+			gzip.end();
+            winston.info('Finished extracting ' + path.basename(pathinst['inputfile']));
+            return callback(pathinst, parsePathArray);
         });
         gzip.on('error', function(err) { 
             winston.info('Caught exception: ' + err);
         });
 	} else {
-		winston.info("The file %s contains an unsupported extension!", path.basename(abspath));
+		winston.info("The file %s contains an unsupported extension!", path.basename(pathinst['inputfile']));
 		process.exit(0);
 	}
 }
